@@ -4,157 +4,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Luarmor Free</title>
+    <title>Dashboard | UnknownScripts</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 
 <body>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
 
-    <!-- Navbar -->
-    <nav>
-        <div class="container nav-content flex justify-between items-center" style="max-width: 100%; padding: 0 2rem;">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content" style="max-width: 100%; padding: 0 32px;">
             <a href="index.html" class="logo">
-                <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
-                LUARMOR<span>FREE</span>
+                <div class="logo-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div class="logo-text">Unknown<span>Scripts</span></div>
             </a>
-            <div class="flex items-center gap-4">
-                <span style="color: var(--text-muted); font-size: 0.9rem;">Welcome, Admin</span>
-                <button onclick="logout()" class="btn btn-outline"
-                    style="padding: 0.5rem 1rem; font-size: 0.8rem;">Logout</button>
+            <div class="nav-actions">
+                <span style="color: var(--text-muted); font-size: 0.9rem; margin-right: 8px;">
+                    <i class="fas fa-user-circle"></i> Admin
+                </span>
+                <button onclick="logout()" class="btn btn-outline btn-sm">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
             </div>
         </div>
     </nav>
 
-    <div class="dashboard-layout">
+    <div class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <a href="#" class="sidebar-link active" onclick="switchTab('dashboard')"><i class="fas fa-home"
-                    style="width: 20px;"></i> Dashboard</a>
-            <a href="#" class="sidebar-link" onclick="switchTab('scripts')"><i class="fas fa-code"
-                    style="width: 20px;"></i> My Scripts</a>
-            <a href="#" class="sidebar-link" onclick="switchTab('users')"><i class="fas fa-users"
-                    style="width: 20px;"></i> User Manager</a>
-            <a href="#" class="sidebar-link" onclick="switchTab('settings')"><i class="fas fa-cog"
-                    style="width: 20px;"></i> Settings</a>
+            <div class="sidebar-section">
+                <div class="sidebar-label">Main</div>
+                <a href="#" class="sidebar-link active" data-view="dashboard">
+                    <i class="fas fa-home"></i>
+                    Dashboard
+                </a>
+                <a href="#" class="sidebar-link" data-view="scripts">
+                    <i class="fas fa-code"></i>
+                    My Scripts
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-label">Management</div>
+                <a href="#" class="sidebar-link" data-view="users">
+                    <i class="fas fa-users"></i>
+                    Keys & Users
+                </a>
+                <a href="#" class="sidebar-link" data-view="settings">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </div>
         </aside>
 
-        <!-- Main Content -->
+        <!-- Main Content Area -->
         <main class="main-content">
+
             <!-- Dashboard View -->
-            <div id="view-dashboard" class="animate-fade-in">
-                <h2 style="margin-bottom: 2rem;">Overview</h2>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div class="card">
-                        <h4 style="color: var(--text-muted);">Total Executions</h4>
-                        <div style="font-size: 2.5rem; font-weight: 700;">1,284</div>
+            <div id="view-dashboard" class="view active">
+                <h2 style="margin-bottom: 24px; font-size: 1.5rem;">Overview</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Total Executions</h4>
+                        <div class="stat-value">1,284</div>
                     </div>
-                    <div class="card">
-                        <h4 style="color: var(--text-muted);">Active Keys</h4>
-                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary);">42</div>
+                    <div class="stat-card">
+                        <h4>Active Keys</h4>
+                        <div class="stat-value accent">42</div>
                     </div>
-                    <div class="card">
-                        <h4 style="color: var(--text-muted);">Scripts</h4>
-                        <div style="font-size: 2.5rem; font-weight: 700;">8</div>
+                    <div class="stat-card">
+                        <h4>Protected Scripts</h4>
+                        <div class="stat-value">8</div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3>Quick Obfuscate</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 1rem;">Paste your Lua script below to protect it.
-                    </p>
-                    <textarea id="scriptInput" placeholder="print('Hello World')"
-                        style="width: 100%; height: 200px; background: #0d0d0d; border: 1px solid var(--card-border); border-radius: 8px; color: #fff; padding: 1rem; font-family: var(--font-mono); resize: vertical;"></textarea>
-
-                    <div class="flex gap-4" style="margin-top: 1rem;">
-                        <button onclick="obfuscateScript()" class="btn btn-primary">Protect Script</button>
-                        <button onclick="copyOutput()" class="btn btn-outline" id="copyBtn" style="display: none;">Copy
-                            Output</button>
-                        <button onclick="downloadOutput()" class="btn btn-outline" id="downloadBtn"
-                            style="display: none;">Download</button>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-shield-alt" style="margin-right: 8px; color: var(--accent-secondary);"></i>
+                            Quick Protect</h3>
                     </div>
+                    <div class="panel-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Paste your Lua script below to
+                            obfuscate and protect it.</p>
 
-                    <div id="outputArea" style="margin-top: 1rem; display: none;">
-                        <h4 style="margin-bottom: 0.5rem;">1. Protected Output (Copy & Host This):</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">This site is
-                            static, so it cannot host the file for you. Copy the code below, create a <strong>Secret
-                                Gist</strong> on GitHub, and click "Raw".</p>
-                        <textarea id="scriptOutput" readonly
-                            style="width: 100%; height: 100px; background: #0d0d0d; border: 1px solid var(--primary); border-radius: 8px; color: var(--primary); padding: 1rem; font-family: var(--font-mono); margin-bottom: 1.5rem;"></textarea>
+                        <textarea id="scriptInput"
+                            placeholder="-- Paste your script here&#10;print('Hello World')"></textarea>
 
-                        <h4 style="margin-bottom: 0.5rem;">2. Create Loader:</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Paste the
-                            <strong>Raw Link</strong> from your Gist below to generate the final loadstring.</p>
-                        <div class="flex gap-4">
-                            <input type="text" id="rawLinkInput" placeholder="https://gist.githubusercontent.com/..."
-                                style="flex: 1; padding: 0.75rem; background: #0d0d0d; border: 1px solid var(--card-border); border-radius: 6px; color: white;">
-                            <button onclick="createLoader()" class="btn btn-primary">Get Loadstring</button>
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button onclick="obfuscateScript()" class="btn btn-primary">
+                                <i class="fas fa-lock"></i>
+                                Protect Script
+                            </button>
+                            <button onclick="copyOutput()" class="btn btn-outline" id="copyBtn" style="display: none;">
+                                <i class="fas fa-copy"></i>
+                                Copy
+                            </button>
+                            <button onclick="downloadOutput()" class="btn btn-outline" id="downloadBtn"
+                                style="display: none;">
+                                <i class="fas fa-download"></i>
+                                Download
+                            </button>
                         </div>
 
-                        <div id="finalLoaderArea" style="margin-top: 1rem; display: none;">
-                            <textarea id="finalLoader" readonly
-                                style="width: 100%; height: 60px; background: #0d0d0d; border: 1px solid #22c55e; border-radius: 8px; color: #22c55e; padding: 1rem; font-family: var(--font-mono);"></textarea>
+                        <!-- Output Section -->
+                        <div id="outputArea" class="output-section" style="display: none;">
+                            <h4><i class="fas fa-file-code" style="margin-right: 8px;"></i> Step 1: Protected Output
+                            </h4>
+                            <p>Copy this code and paste it into a <strong>Secret Gist</strong> on GitHub. Then click
+                                "Raw" to get the URL.</p>
+                            <textarea id="scriptOutput" class="output-textarea" readonly
+                                style="min-height: 120px;"></textarea>
+
+                            <div style="margin-top: 24px;">
+                                <h4><i class="fas fa-link" style="margin-right: 8px;"></i> Step 2: Generate Loader</h4>
+                                <p>Paste the <strong>Raw Gist URL</strong> below to generate your loadstring.</p>
+                                <div class="input-group" style="margin-top: 12px;">
+                                    <input type="text" id="rawLinkInput"
+                                        placeholder="https://gist.githubusercontent.com/...">
+                                    <button onclick="createLoader()" class="btn btn-primary">
+                                        <i class="fas fa-wand-magic-sparkles"></i>
+                                        Generate
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="finalLoaderArea" style="margin-top: 16px; display: none;">
+                                <h4><i class="fas fa-check-circle" style="margin-right: 8px; color: #22c55e;"></i> Your
+                                    Loadstring</h4>
+                                <textarea id="finalLoader" class="output-success" readonly
+                                    style="min-height: 80px;"></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Scripts View -->
-            <div id="view-scripts" class="animate-fade-in" style="display: none;">
-                <div class="flex justify-between items-center" style="margin-bottom: 2rem;">
-                    <h2>My Scripts</h2>
-                    <button class="btn btn-primary" onclick="switchTab('dashboard')">+ New Script</button>
+            <div id="view-scripts" class="view">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 style="font-size: 1.5rem;">My Scripts</h2>
+                    <button class="btn btn-primary btn-sm" onclick="switchView('dashboard')">
+                        <i class="fas fa-plus"></i>
+                        New Script
+                    </button>
                 </div>
-                <div class="card">
-                    <table style="width: 100%; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-muted);">
-                                <th style="padding: 1rem;">Name</th>
-                                <th style="padding: 1rem;">Version</th>
-                                <th style="padding: 1rem;">Status</th>
-                                <th style="padding: 1rem;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="scriptTableBody">
-                            <tr>
-                                <td style="padding: 1rem;">Main Loader</td>
-                                <td style="padding: 1rem;">v1.0.2</td>
-                                <td style="padding: 1rem;"><span
-                                        style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Active</span>
-                                </td>
-                                <td style="padding: 1rem;"><button class="btn btn-outline"
-                                        style="padding: 0.25rem 0.5rem;">Manage</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <div class="panel">
+                    <div class="panel-body" style="padding: 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <th
+                                        style="text-align: left; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
+                                        Name</th>
+                                    <th
+                                        style="text-align: left; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
+                                        Version</th>
+                                    <th
+                                        style="text-align: left; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
+                                        Status</th>
+                                    <th
+                                        style="text-align: right; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scriptTableBody">
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <td style="padding: 16px 24px; font-weight: 500;">Main Loader</td>
+                                    <td style="padding: 16px 24px; color: var(--text-secondary);">v1.0.2</td>
+                                    <td style="padding: 16px 24px;">
+                                        <span class="key-status">Active</span>
+                                    </td>
+                                    <td style="padding: 16px 24px; text-align: right;">
+                                        <button class="btn btn-ghost btn-sm">Manage</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- Users View -->
-            <div id="view-users" class="animate-fade-in" style="display: none;">
-                <div class="flex justify-between items-center" style="margin-bottom: 2rem;">
-                    <h2>User Management</h2>
-                    <button onclick="generateKey()" class="btn btn-primary">Generate Key</button>
+            <div id="view-users" class="view">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 style="font-size: 1.5rem;">Keys & Users</h2>
+                    <button onclick="generateKey()" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i>
+                        Generate Key
+                    </button>
                 </div>
 
-                <div class="card" style="margin-bottom: 2rem;">
-                    <h3>Generated Keys</h3>
-                    <div id="keyList" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <!-- Keys will be added here -->
-                        <div class="flex justify-between items-center"
-                            style="background: #0d0d0d; padding: 0.75rem; border-radius: 6px;">
-                            <span class="font-mono" style="color: var(--text-muted);">KEY_EXAMPLE_123</span>
-                            <span style="font-size: 0.8rem; color: #22c55e;">Unused</span>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Generated Keys</h3>
+                    </div>
+                    <div class="panel-body" id="keyList">
+                        <div class="key-item">
+                            <code>KEY-DEMO-ABCD-1234</code>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="key-status">Unused</span>
+                                <button class="key-delete" onclick="this.parentElement.parentElement.remove()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Settings View -->
-            <div id="view-settings" class="animate-fade-in" style="display: none;">
-                <h2>Settings</h2>
-                <p style="color: var(--text-muted);">This is a demo panel. Settings are not persistent in this version.
-                </p>
+            <div id="view-settings" class="view">
+                <h2 style="margin-bottom: 24px; font-size: 1.5rem;">Settings</h2>
+                <div class="panel">
+                    <div class="panel-body">
+                        <p style="color: var(--text-secondary);">
+                            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                            This is a static site. Settings and data are stored locally in your browser and will reset
+                            if you clear your cache.
+                        </p>
+                    </div>
+                </div>
             </div>
 
         </main>

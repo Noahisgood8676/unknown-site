@@ -4,59 +4,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luarmor Free | Advanced Lua Protection</title>
+    <title>Unknown Scripts | Advanced Lua Protection</title>
+    <meta name="description"
+        content="The most advanced free Lua obfuscation and whitelist management system. Protect your scripts with military-grade security.">
     <link rel="stylesheet" href="assets/css/style.css">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <!-- Placeholder kit, might need a real one or SVG icons -->
-    <!-- Using CDN for Icons as fallback -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 
 <body>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
 
-    <!-- Navbar -->
-    <nav>
-        <div class="container nav-content flex justify-between items-center">
-            <a href="#" class="logo">
-                <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
-                LUARMOR<span>FREE</span>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div class="logo-text">Unknown<span>Scripts</span></div>
             </a>
-            <div class="flex items-center gap-4">
-                <a href="#features" class="btn btn-outline" style="border:none;">Features</a>
-                <button onclick="login()" class="btn btn-primary" style="margin-right:0;">Login</button>
+            <div class="nav-actions">
+                <a href="#features" class="btn btn-ghost">Features</a>
+                <button onclick="login()" class="btn btn-primary">
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                    Access Panel
+                </button>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero text-center">
+    <section class="hero">
         <div class="container">
-            <div class="animate-fade-in">
-                <h1 class="text-gradient">Protect Your Scripts<br>With Military Grade Security</h1>
-                <p>The most advanced free Lua obfuscation and whitelist management system for Roblox developers. Secure
-                    your intellectual property today.</p>
-                <div class="flex justify-center gap-4">
-                    <button onclick="login()" class="btn btn-primary"><i class="fas fa-rocket"
-                            style="margin-right:8px;"></i> Get Started</button>
-                    <a href="#" class="btn btn-outline"><i class="fab fa-discord" style="margin-right:8px;"></i> Join
-                        Discord</a>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-sparkles"></i>
+                    Personal Protection Suite
                 </div>
 
-                <!-- Fake Code Snippet -->
-                <div class="code-window" style="max-width: 600px; margin: 3rem auto;">
-                    <div class="window-controls">
-                        <div class="dot red"></div>
-                        <div class="dot yellow"></div>
-                        <div class="dot green"></div>
+                <h1>Protect Your Scripts With Military-Grade Security</h1>
+
+                <p>Advanced Lua obfuscation and whitelist management. Keep your code secure, manage access with ease,
+                    and deploy updates instantly.</p>
+
+                <div class="hero-buttons">
+                    <button onclick="login()" class="btn btn-primary">
+                        <i class="fas fa-rocket"></i>
+                        Open Dashboard
+                    </button>
+                    <a href="#features" class="btn btn-outline">
+                        <i class="fas fa-info-circle"></i>
+                        Learn More
+                    </a>
+                </div>
+
+                <!-- Code Preview -->
+                <div class="code-window">
+                    <div class="code-header">
+                        <div class="code-dot red"></div>
+                        <div class="code-dot yellow"></div>
+                        <div class="code-dot green"></div>
+                        <span class="code-title">loader.lua</span>
                     </div>
-                    <div class="code-content">
-                        <span class="keyword">local</span> Luarmor <span class="keyword">=</span> <span
-                            class="func">loadstring</span>(game:<span class="func">HttpGet</span>(<span
-                            class="string">"https://github.com/user/repo/raw/main/loader.lua"</span>))()<br>
-                        <br>
-                        Luarmor.<span class="func">init</span>({<br>
-                        &nbsp;&nbsp;key = <span class="string">"KEY_1234_ABCD"</span>,<br>
-                        &nbsp;&nbsp;script_id = <span class="string">"839210"</span><br>
+                    <div class="code-body">
+                        <span class="comment">-- Protected by UnknownScripts</span><br>
+                        <span class="keyword">local</span> Loader = <span class="func">loadstring</span>(game:<span
+                            class="func">HttpGet</span>(<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"https://raw.githubusercontent.com/..."</span><br>
+                        ))()</span><br><br>
+                        Loader.<span class="func">execute</span>({<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;key = <span class="string">"YOUR_KEY_HERE"</span><br>
                         })
                     </div>
                 </div>
@@ -64,37 +85,50 @@
         </div>
     </section>
 
-    <!-- Features -->
-    <section id="features" style="padding: 5rem 0;">
+    <!-- Features Section -->
+    <section class="features" id="features">
         <div class="container">
-            <h2 class="text-center" style="font-size: 2.5rem; margin-bottom: 3rem;">Why Choose Us?</h2>
-            <div class="flex"
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                <div class="card">
-                    <i class="fas fa-lock" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                    <h3>Secure Obfuscation</h3>
-                    <p style="color: var(--text-muted); margin-top: 0.5rem;">Advanced virtualization and bytecode
-                        encryption to keep your source code safe from decompilers.</p>
+            <div class="section-header">
+                <h2>Built for Security</h2>
+                <p>Everything you need to protect and manage your Lua scripts.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3>Advanced Obfuscation</h3>
+                    <p>Multi-layer protection with bytecode encoding and string encryption to prevent reverse
+                        engineering.</p>
                 </div>
-                <div class="card">
-                    <i class="fas fa-key" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                    <h3>Key System</h3>
-                    <p style="color: var(--text-muted); margin-top: 0.5rem;">Managing user access has never been easier.
-                        Create, delete, and manage keys with one click.</p>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3>Key Management</h3>
+                    <p>Generate and manage access keys effortlessly. Control who can run your scripts with granular
+                        permissions.</p>
                 </div>
-                <div class="card">
-                    <i class="fas fa-bolt" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem;"></i>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
                     <h3>Instant Updates</h3>
-                    <p style="color: var(--text-muted); margin-top: 0.5rem;">Push updates to all your users instantly
-                        using our cloud-based loader system.</p>
+                    <p>Push updates to all users instantly through our cloud-based loader system. No redistribution
+                        needed.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer
-        style="border-top: 1px solid var(--card-border); padding: 2rem 0; margin-top: 5rem; text-align: center; color: var(--text-muted);">
-        <p>&copy; 2024 Luarmor Free Clone. All rights reserved.</p>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 UnknownScripts. Personal Use Only.</p>
+        </div>
     </footer>
 
     <script src="assets/js/main.js"></script>

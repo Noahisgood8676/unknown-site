@@ -1,47 +1,109 @@
-// Navigation
-function switchTab(tabId) {
-    // Hide all views
-    document.querySelectorAll('[id^="view-"]').forEach(el => {
-        el.style.display = 'none';
-    });
+/**
+ * UnknownScripts - Main Application Logic
+ * Clean, modular JavaScript for the protection panel
+ */
 
-    // Show selected view
-    document.getElementById(`view-${tabId}`).style.display = 'block';
+// ============================================
+// Configuration
+// ============================================
+const CONFIG = {
+    accessCode: "unknown2011scripts",
+    storageKey: "unknownscripts_auth"
+};
 
-    // Update sidebar active state
-    document.querySelectorAll('.sidebar-link').forEach(el => {
-        el.classList.remove('active');
-    });
-    // Simple heuristic to highlight the clicked link (in a real app, pass 'this')
-    event.target.closest('.sidebar-link').classList.add('active');
+// ============================================
+// Authentication
+// ============================================
+function checkAuth() {
+    const isDashboard = window.location.pathname.includes('dashboard.html');
+    const isLoggedIn = localStorage.getItem(CONFIG.storageKey) === 'true';
+
+    if (isDashboard && !isLoggedIn) {
+        window.location.href = 'index.html';
+    }
 }
 
-// Obfuscation Logic (Client-Side Simulation)
-function obfuscateScript() {
-    const input = document.getElementById('scriptInput').value;
-    if (!input) return alert("Please enter a script!");
+function login() {
+    const password = prompt("🔐 Enter Access Code:");
 
-    // Simple "Obfuscation" via Bytecode simulation (String.char)
-    // This is NOT secure, but mimics the "look" of obfuscated code.
-    let byteString = "";
-    for (let i = 0; i < input.length; i++) {
-        byteString += "\\" + input.charCodeAt(i);
+    if (password === null) return; // User cancelled
+
+    if (password === CONFIG.accessCode) {
+        localStorage.setItem(CONFIG.storageKey, 'true');
+        window.location.href = 'dashboard.html';
+    } else {
+        alert("❌ Invalid Access Code");
+    }
+}
+
+function logout() {
+    localStorage.removeItem(CONFIG.storageKey);
+    window.location.href = 'index.html';
+}
+
+// Run auth check immediately
+checkAuth();
+
+// ============================================
+// View Navigation (Dashboard)
+// ============================================
+function switchView(viewId) {
+    // Hide all views
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.remove('active');
+    });
+
+    // Show target view
+    const targetView = document.getElementById(`view-${viewId}`);
+    if (targetView) {
+        targetView.classList.add('active');
     }
 
-    // Create a "Watermark" or "Loader" wrapper
-    const watermark = "-- Protected by Luarmor Free (Clone)\n";
-    const loader = `loadstring(game:HttpGet("https://github.com/StartYourProject"))()`;
+    // Update sidebar active state
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.view === viewId) {
+            link.classList.add('active');
+        }
+    });
+}
 
-    // Actually just base64 encode it for the "protected" visual
-    const b64 = btoa(input);
-    const output = `${watermark}local _1 = "${b64}";\nlocal _2 = function(s) return s:reverse() end\n-- This is a demo obfuscation\nloadstring(game:GetService("HttpService"):JSONDecode('"${input}"'))()`; // Joke implementation
+// ============================================
+// Script Protection (Obfuscation)
+// ============================================
+function obfuscateScript() {
+    const input = document.getElementById('scriptInput').value.trim();
 
-    // Better one:
-    const betterOutput = `${watermark}local v1 = "${b64}"\nloadstring(game:GetService("HttpService"):JSONDecode('"'.. v1 ..'"'))() -- This is just a visual demo`;
+    if (!input) {
+        alert("⚠️ Please enter a script to protect!");
+        return;
+    }
 
-    document.getElementById('scriptOutput').value = betterOutput;
+    // Encode to Base64
+    const encoded = btoa(unescape(encodeURIComponent(input)));
 
-    // Show functionality
+    // Generate a "protected" wrapper
+    const watermark = "-- Protected by UnknownScripts\n-- Do not redistribute\n\n";
+
+    const protectedCode = `${watermark}local _ENV = getfenv()
+local _decode = function(s) 
+    return (s:gsub('.', function(x) 
+        local r, f = '', (x:byte() - 35) % 95 + 32
+        for i = 8, 1, -1 do 
+            r = r .. (f % 2^i - f % 2^(i-1) > 0 and '1' or '0') 
+        end
+        return string.char(tonumber(r, 2))
+    end))
+end
+
+local _data = "${encoded}"
+local _script = _decode(_data)
+
+-- Runtime execution
+loadstring(_script)()`;
+
+    // Display output
+    document.getElementById('scriptOutput').value = protectedCode;
     document.getElementById('outputArea').style.display = 'block';
     document.getElementById('copyBtn').style.display = 'inline-flex';
     document.getElementById('downloadBtn').style.display = 'inline-flex';
@@ -50,28 +112,52 @@ function obfuscateScript() {
 function copyOutput() {
     const output = document.getElementById('scriptOutput');
     output.select();
-    document.execCommand('copy');
-    alert("Copied to clipboard!");
+    output.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(output.value).then(() => {
+        // Visual feedback
+        const btn = document.getElementById('copyBtn');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.style.background = 'rgba(34, 197, 94, 0.2)';
+        btn.style.borderColor = '#22c55e';
+        btn.style.color = '#22c55e';
+
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.style.borderColor = '';
+            btn.style.color = '';
+        }, 2000);
+    });
 }
 
 function downloadOutput() {
     const output = document.getElementById('scriptOutput').value;
     const blob = new Blob([output], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
     a.download = "protected_script.lua";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function createLoader() {
-    const rawLink = document.getElementById('rawLinkInput').value;
-    if (!rawLink) return alert("Please paste your Raw Gist Link first!");
+    const rawLink = document.getElementById('rawLinkInput').value.trim();
 
-    // Validate it looks like a URL
-    if (!rawLink.startsWith('http')) return alert("Invalid URL. Make sure it starts with http/https");
+    if (!rawLink) {
+        alert("⚠️ Please paste your Raw Gist URL first!");
+        return;
+    }
+
+    if (!rawLink.startsWith('http')) {
+        alert("❌ Invalid URL. Make sure it starts with http:// or https://");
+        return;
+    }
 
     const loaderCode = `loadstring(game:HttpGet("${rawLink}"))()`;
 
@@ -79,61 +165,54 @@ function createLoader() {
     document.getElementById('finalLoaderArea').style.display = 'block';
 }
 
-// User Management / Key Gen
+// ============================================
+// Key Management
+// ============================================
 function generateKey() {
+    const segments = 4;
+    const segmentLength = 4;
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let key = 'KEY_';
-    for (let i = 0; i < 4; i++) {
-        for (let j = 0; j < 4; j++) key += chars.charAt(Math.floor(Math.random() * chars.length));
-        if (i < 3) key += '-';
+
+    let key = 'KEY';
+    for (let i = 0; i < segments; i++) {
+        key += '-';
+        for (let j = 0; j < segmentLength; j++) {
+            key += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
     }
 
-    const div = document.createElement('div');
-    div.className = 'flex justify-between items-center';
-    div.style.background = '#0d0d0d';
-    div.style.padding = '0.75rem';
-    div.style.borderRadius = '6px';
-    div.innerHTML = `
-        <span class="font-mono" style="color: var(--text-muted);">${key}</span>
-        <button onclick="this.parentElement.remove()" style="color: #ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+    // Create key element
+    const keyItem = document.createElement('div');
+    keyItem.className = 'key-item';
+    keyItem.innerHTML = `
+        <code>${key}</code>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="key-status">Unused</span>
+            <button class="key-delete" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
     `;
 
-    const list = document.getElementById('keyList');
-    if (list) list.prepend(div);
-}
-
-// Auth Simulation
-// Auth Simulation
-const SECRET_PASS = "unknown2011scripts"; // Custom Access Code
-
-function checkAuth() {
-    const isDashboard = window.location.pathname.includes('dashboard.html');
-    const isLoggedIn = localStorage.getItem('luarmor_auth') === 'true';
-
-    if (isDashboard && !isLoggedIn) {
-        window.location.href = 'index.html';
+    // Add to list
+    const keyList = document.getElementById('keyList');
+    if (keyList) {
+        keyList.insertBefore(keyItem, keyList.firstChild);
     }
 }
 
-function login() {
-    const pass = prompt("Enter Access Key:"); // Simple prompt for demo
-    if (pass === SECRET_PASS) {
-        localStorage.setItem('luarmor_auth', 'true');
-        window.location.href = 'dashboard.html';
-    } else {
-        alert("Invalid Key");
-    }
-}
-
-function logout() {
-    localStorage.removeItem('luarmor_auth');
-    window.location.href = 'index.html';
-}
-
-// Run auth check immediately
-checkAuth();
-
-// Animation init
+// ============================================
+// Initialization
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Add any init logic here
+    // Setup sidebar navigation
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const viewId = link.dataset.view;
+            if (viewId) {
+                switchView(viewId);
+            }
+        });
+    });
 });
