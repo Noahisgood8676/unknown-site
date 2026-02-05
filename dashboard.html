@@ -9,6 +9,86 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 8px;
+            transition: var(--transition-fast);
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
 </head>
 
 <body>
@@ -74,15 +154,15 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h4>Total Executions</h4>
-                        <div class="stat-value">1,284</div>
+                        <div class="stat-value" id="statExecutions">0</div>
                     </div>
                     <div class="stat-card">
                         <h4>Active Keys</h4>
-                        <div class="stat-value accent">42</div>
+                        <div class="stat-value accent" id="statKeys">0</div>
                     </div>
                     <div class="stat-card">
                         <h4>Protected Scripts</h4>
-                        <div class="stat-value">8</div>
+                        <div class="stat-value" id="statScripts">0</div>
                     </div>
                 </div>
 
@@ -98,7 +178,7 @@
                         <textarea id="scriptInput"
                             placeholder="-- Paste your script here&#10;print('Hello World')"></textarea>
 
-                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
                             <button onclick="obfuscateScript()" class="btn btn-primary">
                                 <i class="fas fa-lock"></i>
                                 Protect Script
@@ -111,6 +191,11 @@
                                 style="display: none;">
                                 <i class="fas fa-download"></i>
                                 Download
+                            </button>
+                            <button onclick="saveCurrentAsScript()" class="btn btn-outline" id="saveBtn"
+                                style="display: none;">
+                                <i class="fas fa-save"></i>
+                                Save to My Scripts
                             </button>
                         </div>
 
@@ -177,16 +262,7 @@
                                 </tr>
                             </thead>
                             <tbody id="scriptTableBody">
-                                <tr style="border-bottom: 1px solid var(--border-color);">
-                                    <td style="padding: 16px 24px; font-weight: 500;">Main Loader</td>
-                                    <td style="padding: 16px 24px; color: var(--text-secondary);">v1.0.2</td>
-                                    <td style="padding: 16px 24px;">
-                                        <span class="key-status">Active</span>
-                                    </td>
-                                    <td style="padding: 16px 24px; text-align: right;">
-                                        <button class="btn btn-ghost btn-sm">Manage</button>
-                                    </td>
-                                </tr>
+                                <!-- Scripts rendered by JS -->
                             </tbody>
                         </table>
                     </div>
@@ -208,15 +284,7 @@
                         <h3>Generated Keys</h3>
                     </div>
                     <div class="panel-body" id="keyList">
-                        <div class="key-item">
-                            <code>KEY-DEMO-ABCD-1234</code>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span class="key-status">Unused</span>
-                                <button class="key-delete" onclick="this.parentElement.parentElement.remove()">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
+                        <!-- Keys rendered by JS -->
                     </div>
                 </div>
             </div>
@@ -226,11 +294,16 @@
                 <h2 style="margin-bottom: 24px; font-size: 1.5rem;">Settings</h2>
                 <div class="panel">
                     <div class="panel-body">
-                        <p style="color: var(--text-secondary);">
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">
                             <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
-                            This is a static site. Settings and data are stored locally in your browser and will reset
-                            if you clear your cache.
+                            This is a static site. Data is stored in your browser's local storage.
                         </p>
+                        <button
+                            onclick="if(confirm('Are you sure? This will delete all scripts and keys!')) { localStorage.clear(); location.reload(); }"
+                            class="btn btn-outline" style="border-color: #ef4444; color: #ef4444;">
+                            <i class="fas fa-trash"></i>
+                            Clear All Data
+                        </button>
                     </div>
                 </div>
             </div>
@@ -238,7 +311,58 @@
         </main>
     </div>
 
+    <!-- Edit Script Modal -->
+    <div id="editScriptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit" style="margin-right: 8px;"></i> Edit Script</h3>
+                <button class="modal-close" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editScriptName">Script Name</label>
+                    <input type="text" id="editScriptName" placeholder="My Awesome Script">
+                </div>
+                <div class="form-group">
+                    <label for="editScriptGist">Raw Gist URL</label>
+                    <input type="text" id="editScriptGist" placeholder="https://gist.githubusercontent.com/...">
+                </div>
+                <div class="form-group">
+                    <label for="editScriptCode">Protected Code</label>
+                    <textarea id="editScriptCode" style="min-height: 200px;"
+                        placeholder="-- Protected code here"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEditedScript()">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/main.js"></script>
+    <script>
+        // Show save button when output is visible
+        const observer = new MutationObserver(() => {
+            const outputArea = document.getElementById('outputArea');
+            const saveBtn = document.getElementById('saveBtn');
+            if (outputArea && saveBtn) {
+                saveBtn.style.display = outputArea.style.display === 'none' ? 'none' : 'inline-flex';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const outputArea = document.getElementById('outputArea');
+            if (outputArea) {
+                observer.observe(outputArea, { attributes: true, attributeFilter: ['style'] });
+            }
+        });
+    </script>
 </body>
 
 </html>
