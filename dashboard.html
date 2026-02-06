@@ -4,457 +4,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | UnknownScripts</title>
+    <title>Admin Panel | UnknownScripts</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
     <style>
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
+        .lock-animation {
+            animation: pulse-lock 2s infinite;
         }
 
-        .modal-content {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+        @keyframes pulse-lock {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+            }
 
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-color);
-        }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+            }
 
-        .modal-header h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 8px;
-            transition: var(--transition-fast);
-        }
-
-        .modal-close:hover {
-            color: var(--text-primary);
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-        }
-
-        .modal-footer {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            padding: 16px 24px;
-            border-top: 1px solid var(--border-color);
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Background Effects -->
     <div class="bg-grid"></div>
 
-    <!-- Navigation -->
     <nav class="navbar">
-        <div class="container navbar-content" style="max-width: 100%; padding: 0 32px;">
-            <a href="index.html" class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-shield-halved"></i>
+        <div class="container navbar-content">
+            <a href="#" class="logo">
+                <div class="logo-icon lock-animation">
+                    <i class="fas fa-user-secret"></i>
                 </div>
-                <div class="logo-text">Unknown<span>Scripts</span></div>
+                <div class="logo-text">Unknown<span>Panel</span></div>
             </a>
-            <div class="nav-actions">
-                <span style="color: var(--text-muted); font-size: 0.9rem; margin-right: 8px;">
-                    <i class="fas fa-user-circle"></i> Admin
-                </span>
-                <button onclick="logout()" class="btn btn-outline btn-sm">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
-                </button>
-            </div>
+            <button onclick="logout()" class="btn btn-outline btn-sm">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
         </div>
     </nav>
 
-    <div class="dashboard">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-section">
-                <div class="sidebar-label">Main</div>
-                <a href="#" class="sidebar-link active" data-view="dashboard">
-                    <i class="fas fa-home"></i>
-                    Dashboard
-                </a>
-                <a href="#" class="sidebar-link" data-view="scripts">
-                    <i class="fas fa-code"></i>
-                    My Scripts
-                </a>
-                <a href="#" class="sidebar-link" data-view="loader">
-                    <i class="fas fa-rocket"></i>
-                    Loader Builder
-                </a>
+    <div class="dashboard container" style="max-width: 900px; margin-top: 40px; display: block;">
+
+        <div class="panel">
+            <div class="panel-header">
+                <h3><i class="fas fa-lock" style="color: var(--accent-primary); margin-right: 10px;"></i> Script Locker
+                </h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Encrypt your script so it can
+                    ONLY be read/executed with a password.</p>
             </div>
 
-            <div class="sidebar-section">
-                <div class="sidebar-label">Management</div>
-                <a href="#" class="sidebar-link" data-view="users">
-                    <i class="fas fa-users"></i>
-                    Keys & Users
-                </a>
-                <a href="#" class="sidebar-link" data-view="settings">
-                    <i class="fas fa-cog"></i>
-                    Settings
-                </a>
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="main-content">
-
-            <!-- Dashboard View -->
-            <div id="view-dashboard" class="view active">
-                <h2 style="margin-bottom: 24px; font-size: 1.5rem;">Overview</h2>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h4>Total Executions</h4>
-                        <div class="stat-value" id="statExecutions">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Active Keys</h4>
-                        <div class="stat-value accent" id="statKeys">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Protected Scripts</h4>
-                        <div class="stat-value" id="statScripts">0</div>
-                    </div>
+            <div class="panel-body">
+                <!-- Input Section -->
+                <div class="form-group">
+                    <label>1. Paste Your Script</label>
+                    <textarea id="sourceScript" placeholder="print('Hello World')..."
+                        style="min-height: 200px; font-family: monospace;"></textarea>
                 </div>
 
-                <div class="panel">
-                    <div class="panel-header">
-                        <h3><i class="fas fa-shield-alt" style="margin-right: 8px; color: var(--accent-secondary);"></i>
-                            Quick Protect</h3>
+                <div class="form-group">
+                    <label>2. Set Execution Password</label>
+                    <div style="position: relative;">
+                        <input type="text" id="scriptPassword" placeholder="Enter a strong password..."
+                            style="padding-left: 40px;">
+                        <i class="fas fa-key"
+                            style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
                     </div>
-                    <div class="panel-body">
-                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Paste your Lua script below to
-                            obfuscate and protect it.</p>
-
-                        <textarea id="scriptInput"
-                            placeholder="-- Paste your script here&#10;print('Hello World')"></textarea>
-
-                        <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
-                            <button onclick="obfuscateScript()" class="btn btn-primary">
-                                <i class="fas fa-lock"></i>
-                                Protect Script
-                            </button>
-                            <button onclick="copyOutput()" class="btn btn-outline" id="copyBtn" style="display: none;">
-                                <i class="fas fa-copy"></i>
-                                Copy
-                            </button>
-                            <button onclick="downloadOutput()" class="btn btn-outline" id="downloadBtn"
-                                style="display: none;">
-                                <i class="fas fa-download"></i>
-                                Download
-                            </button>
-                            <button onclick="saveCurrentAsScript()" class="btn btn-outline" id="saveBtn"
-                                style="display: none;">
-                                <i class="fas fa-save"></i>
-                                Save to My Scripts
-                            </button>
-                        </div>
-
-                        <!-- Output Section -->
-                        <div id="outputArea" class="output-section" style="display: none;">
-                            <h4><i class="fas fa-file-code" style="margin-right: 8px;"></i> Step 1: Protected Output
-                            </h4>
-                            <p>Copy this code and paste it into a <strong>Secret Gist</strong> on GitHub. Then click
-                                "Raw" to get the URL.</p>
-                            <textarea id="scriptOutput" class="output-textarea" readonly
-                                style="min-height: 120px;"></textarea>
-
-                            <div style="margin-top: 24px;">
-                                <h4><i class="fas fa-link" style="margin-right: 8px;"></i> Step 2: Generate Loader</h4>
-                                <p>Paste the <strong>Raw Gist URL</strong> below to generate your loadstring.</p>
-                                <div class="input-group" style="margin-top: 12px;">
-                                    <input type="text" id="rawLinkInput"
-                                        placeholder="https://gist.githubusercontent.com/...">
-                                    <button onclick="createLoader()" class="btn btn-primary">
-                                        <i class="fas fa-wand-magic-sparkles"></i>
-                                        Generate
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="finalLoaderArea" style="margin-top: 16px; display: none;">
-                                <h4><i class="fas fa-check-circle" style="margin-right: 8px; color: #22c55e;"></i> Your
-                                    Loadstring</h4>
-                                <textarea id="finalLoader" class="output-success" readonly
-                                    style="min-height: 80px;"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Scripts View -->
-            <div id="view-scripts" class="view">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <h2 style="font-size: 1.5rem;">My Scripts</h2>
-                    <button class="btn btn-primary btn-sm" onclick="switchView('dashboard')">
-                        <i class="fas fa-plus"></i>
-                        New Script
-                    </button>
+                    <small style="color: var(--text-muted); display: block; margin-top: 8px;">
+                        <i class="fas fa-triangle-exclamation" style="color: #f59e0b;"></i>
+                        Users MUST have this exact password to run the script. Without it, the code is unreadable.
+                    </small>
                 </div>
 
-                <div class="panel">
-                    <div class="panel-body" style="padding: 0;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="border-bottom: 1px solid var(--border-color);">
-                                    <th
-                                        style="text-align: left; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
-                                        Name</th>
-                                    <th
-                                        style="text-align: left; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
-                                        Version</th>
-                                    <th
-                                        style="text-align: left; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
-                                        Status</th>
-                                    <th
-                                        style="text-align: right; padding: 16px 24px; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
-                                        Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="scriptTableBody">
-                                <!-- Scripts rendered by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                <button onclick="encryptScript()" class="btn btn-primary" style="width: 100%; padding: 16px;">
+                    <i class="fas fa-shield-alt"></i> Encrypt & Generate Loader
+                </button>
 
-            <!-- Loader Builder View -->
-            <div id="view-loader" class="view">
-                <h2 style="margin-bottom: 24px; font-size: 1.5rem;">
-                    <i class="fas fa-rocket" style="margin-right: 8px; color: var(--accent-secondary);"></i>
-                    Loader Builder
-                </h2>
-
-                <div class="panel">
-                    <div class="panel-header">
-                        <h3>Create Your Personal Loader</h3>
-                    </div>
-                    <div class="panel-body">
-                        <p style="color: var(--text-secondary); margin-bottom: 24px;">
-                            Generate a loader script that works like Luarmor. Users load your loader, then call
-                            <code>Loader.execute({ key = "..." })</code> to run your protected script.
+                <!-- Output Section -->
+                <div id="resultArea"
+                    style="display: none; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 30px;">
+                    <div
+                        style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                        <h4 style="color: #22c55e; margin: 0 0 8px 0;"><i class="fas fa-check-circle"></i> Encryption
+                            Successful</h4>
+                        <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">
+                            Your script has been converted into a secure, password-protected loader.
                         </p>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Protected Script Raw URL</label>
-                            <input type="text" id="loaderScriptUrl"
-                                placeholder="https://gist.githubusercontent.com/... (your protected script)">
-                            <small style="color: var(--text-muted); display: block; margin-top: 8px;">
-                                This is the Raw URL of your protected script (the one you obfuscated).
-                            </small>
-                        </div>
+                    <div class="form-group">
+                        <label>Encrypted Loader Script</label>
+                        <textarea id="finalOutput" readonly
+                            style="min-height: 200px; color: var(--accent-secondary); font-family: monospace;"></textarea>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Valid Keys (one per line)</label>
-                            <textarea id="loaderKeys" placeholder="KEY-ABCD-1234-WXYZ&#10;KEY-DEMO-5678-TEST"
-                                style="min-height: 120px; font-family: var(--font-mono);"></textarea>
-                            <small style="color: var(--text-muted); display: block; margin-top: 8px;">
-                                Only these keys will be able to run your script. Use the Keys page to generate them.
-                            </small>
-                        </div>
-
-                        <div class="form-group">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="checkbox" id="loaderKeyCheck" checked style="width: auto;">
-                                Enable Key Checking
-                            </label>
-                        </div>
-
-                        <button onclick="generateLoaderScript()" class="btn btn-primary">
-                            <i class="fas fa-wand-magic-sparkles"></i>
-                            Generate Loader
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="copyToClipboard()" class="btn btn-outline" style="flex: 1;">
+                            <i class="fas fa-copy"></i> Copy Code
                         </button>
-
-                        <div id="loaderOutputArea" style="display: none; margin-top: 24px;">
-                            <h4 style="margin-bottom: 12px;"><i class="fas fa-file-code" style="margin-right: 8px;"></i>
-                                Your Loader Script</h4>
-                            <p style="color: var(--text-secondary); margin-bottom: 12px;">
-                                1. Create a new <strong>Secret Gist</strong> with this code<br>
-                                2. Get the Raw URL<br>
-                                3. Share the usage example below with users
-                            </p>
-                            <textarea id="loaderOutput" class="output-textarea" readonly
-                                style="min-height: 300px;"></textarea>
-
-                            <div style="display: flex; gap: 12px; margin-top: 12px;">
-                                <button onclick="copyLoaderOutput()" class="btn btn-outline">
-                                    <i class="fas fa-copy"></i> Copy Loader
-                                </button>
-                                <button onclick="downloadLoaderOutput()" class="btn btn-outline">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
-                            </div>
-
-                            <div
-                                style="margin-top: 24px; padding: 20px; background: var(--bg-primary); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                                <h4 style="margin-bottom: 12px; color: #22c55e;">
-                                    <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                                    Usage Example
-                                </h4>
-                                <pre
-                                    style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; margin: 0;"><code id="loaderUsageCode">-- Protected by UnknownScripts
-local Loader = loadstring(game:HttpGet(
-    "YOUR_LOADER_RAW_URL_HERE"
-))()
-
-Loader.execute({
-    key = "USER_KEY_HERE"
-})</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Users View -->
-            <div id="view-users" class="view">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <h2 style="font-size: 1.5rem;">Keys & Users</h2>
-                    <button onclick="generateKey()" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i>
-                        Generate Key
-                    </button>
-                </div>
-
-                <div class="panel">
-                    <div class="panel-header">
-                        <h3>Generated Keys</h3>
-                    </div>
-                    <div class="panel-body" id="keyList">
-                        <!-- Keys rendered by JS -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings View -->
-            <div id="view-settings" class="view">
-                <h2 style="margin-bottom: 24px; font-size: 1.5rem;">Settings</h2>
-                <div class="panel">
-                    <div class="panel-body">
-                        <p style="color: var(--text-secondary); margin-bottom: 16px;">
-                            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
-                            This is a static site. Data is stored in your browser's local storage.
-                        </p>
-                        <button
-                            onclick="if(confirm('Are you sure? This will delete all scripts and keys!')) { localStorage.clear(); location.reload(); }"
-                            class="btn btn-outline" style="border-color: #ef4444; color: #ef4444;">
-                            <i class="fas fa-trash"></i>
-                            Clear All Data
+                        <button onclick="downloadScript()" class="btn btn-outline" style="flex: 1;">
+                            <i class="fas fa-download"></i> Download .lua
                         </button>
                     </div>
-                </div>
-            </div>
 
-        </main>
-    </div>
-
-    <!-- Edit Script Modal -->
-    <div id="editScriptModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-edit" style="margin-right: 8px;"></i> Edit Script</h3>
-                <button class="modal-close" onclick="closeEditModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="editScriptName">Script Name</label>
-                    <input type="text" id="editScriptName" placeholder="My Awesome Script">
+                    <div style="margin-top: 24px; padding: 20px; background: var(--bg-secondary); border-radius: 8px;">
+                        <h4 style="margin-bottom: 12px; font-size: 0.95rem;">How to use:</h4>
+                        <ol style="color: var(--text-secondary); margin: 0; padding-left: 20px; line-height: 1.6;">
+                            <li>Upload the code above to a <strong>Secret Gist</strong> (or any raw host).</li>
+                            <li>Give the user the <strong>Raw Link</strong> and the <strong>Password</strong>.</li>
+                            <li>They execute it like this:</li>
+                        </ol>
+                        <div
+                            style="background: #000; padding: 12px; border-radius: 6px; margin-top: 12px; font-family: monospace; color: #fff;">
+                            local Script = loadstring(game:HttpGet("LINK"))()<br>
+                            Script("<span id="demoPass" style="color: #22c55e;">PASSWORD</span>")
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editScriptGist">Raw Gist URL</label>
-                    <input type="text" id="editScriptGist" placeholder="https://gist.githubusercontent.com/...">
-                </div>
-                <div class="form-group">
-                    <label for="editScriptCode">Protected Code</label>
-                    <textarea id="editScriptCode" style="min-height: 200px;"
-                        placeholder="-- Protected code here"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveEditedScript()">
-                    <i class="fas fa-save"></i>
-                    Save Changes
-                </button>
             </div>
         </div>
+
     </div>
 
     <script src="assets/js/main.js"></script>
-    <script>
-        // Show save button when output is visible
-        const observer = new MutationObserver(() => {
-            const outputArea = document.getElementById('outputArea');
-            const saveBtn = document.getElementById('saveBtn');
-            if (outputArea && saveBtn) {
-                saveBtn.style.display = outputArea.style.display === 'none' ? 'none' : 'inline-flex';
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const outputArea = document.getElementById('outputArea');
-            if (outputArea) {
-                observer.observe(outputArea, { attributes: true, attributeFilter: ['style'] });
-            }
-        });
-    </script>
 </body>
 
 </html>

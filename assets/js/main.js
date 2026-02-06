@@ -1,585 +1,123 @@
 /**
- * UnknownScripts - Main Application Logic
- * Fully functional protection panel
+ * UnknownModule - Logic
+ * Client-side encryption for Lua scripts
  */
 
-// ============================================
-// Configuration
-// ============================================
-const CONFIG = {
-    accessCode: "unknown2011scripts",
-    storageKey: "unknownscripts_auth",
-    scriptsKey: "unknownscripts_scripts",
-    keysKey: "unknownscripts_keys"
-};
-
-// ============================================
-// Data Storage
-// ============================================
-function getScripts() {
-    const data = localStorage.getItem(CONFIG.scriptsKey);
-    return data ? JSON.parse(data) : [];
-}
-
-function saveScripts(scripts) {
-    localStorage.setItem(CONFIG.scriptsKey, JSON.stringify(scripts));
-}
-
-function getKeys() {
-    const data = localStorage.getItem(CONFIG.keysKey);
-    return data ? JSON.parse(data) : [];
-}
-
-function saveKeys(keys) {
-    localStorage.setItem(CONFIG.keysKey, JSON.stringify(keys));
-}
-
-// ============================================
-// Authentication
-// ============================================
-function checkAuth() {
-    const isDashboard = window.location.pathname.includes('dashboard.html');
-    const isLoggedIn = localStorage.getItem(CONFIG.storageKey) === 'true';
-
-    if (isDashboard && !isLoggedIn) {
-        window.location.href = 'index.html';
-    }
-}
-
-function login() {
-    const password = prompt("🔐 Enter Access Code:");
-
-    if (password === null) return;
-
-    if (password === CONFIG.accessCode) {
-        localStorage.setItem(CONFIG.storageKey, 'true');
-        window.location.href = 'dashboard.html';
-    } else {
-        alert("❌ Invalid Access Code");
-    }
-}
-
-function logout() {
-    localStorage.removeItem(CONFIG.storageKey);
+// Auth Check
+if (localStorage.getItem('unknownscripts_auth') !== 'true') {
     window.location.href = 'index.html';
 }
 
-checkAuth();
-
-// ============================================
-// View Navigation
-// ============================================
-function switchView(viewId) {
-    document.querySelectorAll('.view').forEach(view => {
-        view.classList.remove('active');
-    });
-
-    const targetView = document.getElementById(`view-${viewId}`);
-    if (targetView) {
-        targetView.classList.add('active');
-    }
-
-    document.querySelectorAll('.sidebar-link').forEach(link => {
-        link.classList.remove('active');
-        if (link.dataset.view === viewId) {
-            link.classList.add('active');
-        }
-    });
+function logout() {
+    localStorage.removeItem('unknownscripts_auth');
+    window.location.href = 'index.html';
 }
 
-// ============================================
-// Script Protection - Simple Byte Encoding
-// ============================================
-let lastProtectedScript = null; // Store for loader builder
+// ==========================================
+// Encryption Logic (XOR + Byte Shuffle)
+// ==========================================
+function encryptScript() {
+    const source = document.getElementById('sourceScript').value;
+    const password = document.getElementById('scriptPassword').value;
+    const outputArea = document.getElementById('resultArea');
+    const demoPassSpan = document.getElementById('demoPass');
 
-function obfuscateScript() {
-    const input = document.getElementById('scriptInput').value.trim();
-
-    if (!input) {
-        alert("⚠️ Please enter a script to protect!");
+    if (!source || !password) {
+        alert("⚠️ Please enter both your script and a password.");
         return;
     }
 
-    // Convert to byte array
-    const bytes = [];
-    for (let i = 0; i < input.length; i++) {
-        bytes.push(input.charCodeAt(i));
+    // 1. Generate Key from Password (Simple Hash)
+    let keyBytes = [];
+    for (let i = 0; i < password.length; i++) {
+        keyBytes.push(password.charCodeAt(i));
     }
 
-    // Generate Lua code with simple byte decoding
-    const protectedCode = `-- Protected by UnknownScripts
--- github.com/Noahisgood8676/unknown-site
-
-local bytes = {${bytes.join(',')}}
-local script = ''
-for i = 1, #bytes do
-    script = script .. string.char(bytes[i])
-end
-loadstring(script)()`;
-
-    // Store for loader builder
-    lastProtectedScript = protectedCode;
-    sessionStorage.setItem('lastProtectedScript', protectedCode);
-
-    document.getElementById('scriptOutput').value = protectedCode;
-    document.getElementById('outputArea').style.display = 'block';
-    document.getElementById('copyBtn').style.display = 'inline-flex';
-    document.getElementById('downloadBtn').style.display = 'inline-flex';
-}
-
-function copyOutput() {
-    const output = document.getElementById('scriptOutput');
-    output.select();
-    output.setSelectionRange(0, 99999);
-
-    navigator.clipboard.writeText(output.value).then(() => {
-        const btn = document.getElementById('copyBtn');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        btn.style.background = 'rgba(34, 197, 94, 0.2)';
-        btn.style.borderColor = '#22c55e';
-        btn.style.color = '#22c55e';
-
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.style.background = '';
-            btn.style.borderColor = '';
-            btn.style.color = '';
-        }, 2000);
-    });
-}
-
-function downloadOutput() {
-    const output = document.getElementById('scriptOutput').value;
-    const blob = new Blob([output], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "protected_script.lua";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-function createLoader() {
-    const rawLink = document.getElementById('rawLinkInput').value.trim();
-
-    if (!rawLink) {
-        alert("⚠️ Please paste your Raw Gist URL first!");
-        return;
+    // 2. Encrypt Content (XOR)
+    let encryptedBytes = [];
+    for (let i = 0; i < source.length; i++) {
+        let charCode = source.charCodeAt(i);
+        let keyChar = keyBytes[i % keyBytes.length];
+        // XOR Operation
+        let encrypted = charCode ^ keyChar;
+        // Additional shift based on key len to scramble further
+        encrypted = (encrypted + keyBytes.length) % 256;
+        encryptedBytes.push(encrypted);
     }
 
-    if (!rawLink.startsWith('http')) {
-        alert("❌ Invalid URL. Make sure it starts with http:// or https://");
-        return;
-    }
+    // 3. Format as Lua Table
+    const luaTable = "{" + encryptedBytes.join(",") + "}";
 
-    const loaderCode = `loadstring(game:HttpGet("${rawLink}"))()`;
-
-    document.getElementById('finalLoader').value = loaderCode;
-    document.getElementById('finalLoaderArea').style.display = 'block';
-}
-
-// ============================================
-// Script Management
-// ============================================
-let editingScriptId = null;
-
-function addScript(name, code, gistUrl = '') {
-    const scripts = getScripts();
-    const newScript = {
-        id: Date.now().toString(),
-        name: name,
-        code: code,
-        gistUrl: gistUrl,
-        version: '1.0.0',
-        status: 'active',
-        createdAt: new Date().toISOString()
-    };
-    scripts.push(newScript);
-    saveScripts(scripts);
-    renderScripts();
-    return newScript;
-}
-
-function deleteScript(id) {
-    if (!confirm('Are you sure you want to delete this script?')) return;
-    const scripts = getScripts().filter(s => s.id !== id);
-    saveScripts(scripts);
-    renderScripts();
-}
-
-function editScript(id) {
-    const scripts = getScripts();
-    const script = scripts.find(s => s.id === id);
-    if (!script) return;
-
-    editingScriptId = id;
-    document.getElementById('editScriptName').value = script.name;
-    document.getElementById('editScriptCode').value = script.code;
-    document.getElementById('editScriptGist').value = script.gistUrl || '';
-    document.getElementById('editScriptModal').style.display = 'flex';
-}
-
-function closeEditModal() {
-    editingScriptId = null;
-    document.getElementById('editScriptModal').style.display = 'none';
-}
-
-function saveEditedScript() {
-    if (!editingScriptId) return;
-
-    const scripts = getScripts();
-    const index = scripts.findIndex(s => s.id === editingScriptId);
-    if (index === -1) return;
-
-    scripts[index].name = document.getElementById('editScriptName').value;
-    scripts[index].code = document.getElementById('editScriptCode').value;
-    scripts[index].gistUrl = document.getElementById('editScriptGist').value;
-
-    // Bump version
-    const parts = scripts[index].version.split('.');
-    parts[2] = parseInt(parts[2]) + 1;
-    scripts[index].version = parts.join('.');
-
-    saveScripts(scripts);
-    renderScripts();
-    closeEditModal();
-}
-
-function toggleScriptStatus(id) {
-    const scripts = getScripts();
-    const script = scripts.find(s => s.id === id);
-    if (!script) return;
-
-    script.status = script.status === 'active' ? 'disabled' : 'active';
-    saveScripts(scripts);
-    renderScripts();
-}
-
-function renderScripts() {
-    const tbody = document.getElementById('scriptTableBody');
-    if (!tbody) return;
-
-    const scripts = getScripts();
-
-    if (scripts.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" style="padding: 40px; text-align: center; color: var(--text-muted);">
-                    <i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
-                    No scripts yet. Create one from the Dashboard!
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    tbody.innerHTML = scripts.map(script => `
-        <tr style="border-bottom: 1px solid var(--border-color);">
-            <td style="padding: 16px 24px; font-weight: 500;">${escapeHtml(script.name)}</td>
-            <td style="padding: 16px 24px; color: var(--text-secondary);">v${script.version}</td>
-            <td style="padding: 16px 24px;">
-                <span class="key-status" style="${script.status === 'disabled' ? 'background: rgba(239, 68, 68, 0.15); color: #ef4444;' : ''}">${script.status === 'active' ? 'Active' : 'Disabled'}</span>
-            </td>
-            <td style="padding: 16px 24px; text-align: right;">
-                <button class="btn btn-ghost btn-sm" onclick="editScript('${script.id}')" title="Edit">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm" onclick="toggleScriptStatus('${script.id}')" title="Toggle Status">
-                    <i class="fas fa-power-off"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm" onclick="copyScriptLoader('${script.id}')" title="Copy Loader">
-                    <i class="fas fa-copy"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm" onclick="deleteScript('${script.id}')" title="Delete" style="color: #ef4444;">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function copyScriptLoader(id) {
-    const script = getScripts().find(s => s.id === id);
-    if (!script || !script.gistUrl) {
-        alert('⚠️ This script has no Gist URL set. Edit it first!');
-        return;
-    }
-
-    const loader = `loadstring(game:HttpGet("${script.gistUrl}"))()`;
-    navigator.clipboard.writeText(loader).then(() => {
-        alert('✅ Loader copied to clipboard!');
-    });
-}
-
-function saveCurrentAsScript() {
-    const code = document.getElementById('scriptOutput').value;
-    const gistUrl = document.getElementById('rawLinkInput').value.trim();
-
-    if (!code) {
-        alert('⚠️ Protect a script first!');
-        return;
-    }
-
-    const name = prompt('📝 Enter a name for this script:');
-    if (!name) return;
-
-    addScript(name, code, gistUrl);
-    alert('✅ Script saved! View it in "My Scripts"');
-}
-
-// ============================================
-// Key Management
-// ============================================
-function generateKey() {
-    const segments = 4;
-    const segmentLength = 4;
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-    let key = 'KEY';
-    for (let i = 0; i < segments; i++) {
-        key += '-';
-        for (let j = 0; j < segmentLength; j++) {
-            key += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-    }
-
-    const keys = getKeys();
-    keys.unshift({ key: key, status: 'unused', createdAt: new Date().toISOString() });
-    saveKeys(keys);
-    renderKeys();
-}
-
-function deleteKey(key) {
-    const keys = getKeys().filter(k => k.key !== key);
-    saveKeys(keys);
-    renderKeys();
-}
-
-function renderKeys() {
-    const keyList = document.getElementById('keyList');
-    if (!keyList) return;
-
-    const keys = getKeys();
-
-    if (keys.length === 0) {
-        keyList.innerHTML = `
-            <div style="padding: 24px; text-align: center; color: var(--text-muted);">
-                <i class="fas fa-key" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
-                No keys generated yet.
-            </div>
-        `;
-        return;
-    }
-
-    keyList.innerHTML = keys.map(k => `
-        <div class="key-item">
-            <code>${k.key}</code>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span class="key-status">${k.status === 'unused' ? 'Unused' : 'Used'}</span>
-                <button class="key-delete" onclick="deleteKey('${k.key}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// ============================================
-// Utilities
-// ============================================
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ============================================
-// Stats
-// ============================================
-function updateStats() {
-    const scripts = getScripts();
-    const keys = getKeys();
-
-    const execEl = document.getElementById('statExecutions');
-    const keysEl = document.getElementById('statKeys');
-    const scriptsEl = document.getElementById('statScripts');
-
-    if (execEl) execEl.textContent = Math.floor(Math.random() * 1000) + scripts.length * 100;
-    if (keysEl) keysEl.textContent = keys.length;
-    if (scriptsEl) scriptsEl.textContent = scripts.length;
-}
-
-// ============================================
-// Loader Builder
-// ============================================
-function generateLoaderScript() {
-    const scriptUrl = document.getElementById('loaderScriptUrl').value.trim();
-    const keysText = document.getElementById('loaderKeys').value.trim();
-    const keyCheckEnabled = document.getElementById('loaderKeyCheck').checked;
-
-    if (!scriptUrl) {
-        alert("⚠️ Please enter your protected script's Raw URL!");
-        return;
-    }
-
-    // Parse keys
-    const keys = keysText
-        .split('\n')
-        .map(k => k.trim())
-        .filter(k => k.length > 0);
-
-    // Generate the keys array string for Lua
-    const keysLuaArray = keys.length > 0
-        ? keys.map(k => `        "${k}"`).join(',\n')
-        : '        -- No keys added';
-
-    const loaderCode = `--[[
-    UnknownScripts Loader v1.1 (Debug Mode)
-    Generated: ${new Date().toISOString()}
-    
-    Usage:
-    local Loader = loadstring(game:HttpGet("YOUR_LOADER_URL"))()
-    Loader.execute({ key = "YOUR_KEY_HERE" })
+    // 4. Generate the Loader Payload
+    // This Lua code runs on the client. It takes the password input,
+    // recreates the decryption key, decrypts the bytes, and runs loadstring.
+    const finalLua = `--[[
+    Protected by UnknownScripts 🛡️
+    Auth Required.
 ]]
 
-local UnknownScripts = {}
-
-local CONFIG = {
-    validKeys = {
-${keysLuaArray}
-    },
-    scriptUrl = [[${scriptUrl}]],
-    keyCheckEnabled = ${keyCheckEnabled}
-}
-
-local function debugLog(msg)
-    print("[UnknownScripts DEBUG]: " .. tostring(msg))
-end
-
-local function isValidKey(key)
-    if not CONFIG.keyCheckEnabled then return true end
-    for _, k in ipairs(CONFIG.validKeys) do
-        if k == key then return true end
+return function(pass)
+    if not pass or type(pass) ~= "string" then
+        return warn("[Unknown] Password required!")
     end
-    return false
-end
 
-function UnknownScripts.execute(options)
-    debugLog("Execute called...")
-    
-    options = options or {}
-    local key = options.key or ""
-    
-    debugLog("Checking key...")
-    if not isValidKey(key) then
-        warn("[UnknownScripts] Invalid key!")
-        return false
+    local enc = ${luaTable}
+    local function decrypt(data, key)
+        local res = {}
+        local keyLen = #key
+        local keyBytes = {string.byte(key, 1, -1)}
+        
+        for i = 1, #data do
+            local k = keyBytes[(i-1) % keyLen + 1]
+            local b = data[i]
+            -- Reverse the shift
+            b = (b - keyLen) % 256
+            -- Reverse the XOR
+            table.insert(res, string.char(bit32.bxor(b, k)))
+        end
+        return table.concat(res)
     end
-    debugLog("Key valid!")
-    
-    debugLog("Fetching protected script...")
-    -- Add cache buster
-    local finalUrl = CONFIG.scriptUrl .. "?t=" .. tostring(os.time())
-    
-    local ok, code = pcall(function()
-        return game:HttpGet(finalUrl)
+
+    -- Attempt Decrypt
+    local success, result = pcall(function()
+        return decrypt(enc, pass)
     end)
+
+    if not success then return warn("[Unknown] Decryption Error") end
+
+    -- Verify (Simple check if it looks like Lua)
+    -- If password is wrong, 'result' will be garbage and loadstring will fail usually
     
-    if not ok or not code then
-        warn("[UnknownScripts] Failed to fetch script! " .. tostring(code))
-        return false
-    end
-    debugLog("Script fetched! Length: " .. #code)
-    
-    if #code < 10 then 
-        warn("[UnknownScripts] Script seems too short/empty") 
+    local func, err = loadstring(result)
+    if not func then
+        warn("[Unknown] Invalid Password (Or compilation failed)")
+        return
     end
 
-    debugLog("Compiling protected script...")
-    local fn, err = loadstring(code)
-    if not fn then
-        warn("[UnknownScripts] Compile error: " .. tostring(err))
-        return false
-    end
-    debugLog("Compilation successful!")
-    
-    debugLog("Running protected script...")
-    local success, runErr = pcall(fn)
-    if not success then
-        warn("[UnknownScripts] Runtime error: " .. tostring(runErr))
-        return false
-    end
-    debugLog("Execution complete!")
-    
-    return true
-end
+    func() -- Run the script
+end`;
 
-function UnknownScripts.checkKey(key)
-    return isValidKey(key)
-end
+    document.getElementById('finalOutput').value = finalLua;
+    demoPassSpan.textContent = password;
+    outputArea.style.display = 'block';
 
-return UnknownScripts`;
-
-    document.getElementById('loaderOutput').value = loaderCode;
-    document.getElementById('loaderOutputArea').style.display = 'block';
+    // Scroll to result
+    outputArea.scrollIntoView({ behavior: 'smooth' });
 }
 
-function copyLoaderOutput() {
-    const output = document.getElementById('loaderOutput');
-    output.select();
-    navigator.clipboard.writeText(output.value).then(() => {
-        alert('✅ Loader copied to clipboard!');
-    });
+function copyToClipboard() {
+    const copyText = document.getElementById("finalOutput");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert("✅ Code copied!");
 }
 
-function downloadLoaderOutput() {
-    const output = document.getElementById('loaderOutput').value;
-    const blob = new Blob([output], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "loader.lua";
-    document.body.appendChild(a);
+function downloadScript() {
+    const text = document.getElementById("finalOutput").value;
+    const blob = new Blob([text], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "locked_script.lua";
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
 }
-
-// ============================================
-// Initialization
-// ============================================
-document.addEventListener('DOMContentLoaded', () => {
-    // Sidebar navigation
-    document.querySelectorAll('.sidebar-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const viewId = link.dataset.view;
-            if (viewId) switchView(viewId);
-        });
-    });
-
-    // Render data
-    renderScripts();
-    renderKeys();
-    updateStats();
-
-    // Pre-fill loader keys from saved keys
-    const keys = getKeys();
-    const loaderKeysEl = document.getElementById('loaderKeys');
-    if (loaderKeysEl && keys.length > 0) {
-        loaderKeysEl.value = keys.map(k => k.key).join('\n');
-    }
-
-    // Close modal on outside click
-    const modal = document.getElementById('editScriptModal');
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeEditModal();
-        });
-    }
-});
