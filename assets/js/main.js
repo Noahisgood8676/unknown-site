@@ -31,7 +31,7 @@ function logout() {
 }
 
 // ==========================================
-// Encryption Logic (XOR + Byte Shuffle)
+// Encryption Logic (Clean Container)
 // ==========================================
 function encryptScript() {
     const source = document.getElementById('sourceScript').value;
@@ -44,79 +44,52 @@ function encryptScript() {
         return;
     }
 
-    // 1. Generate Key from Password (Simple Hash)
-    let keyBytes = [];
-    for (let i = 0; i < password.length; i++) {
-        keyBytes.push(password.charCodeAt(i));
-    }
-
-    // 2. Encrypt Content (XOR)
-    let encryptedBytes = [];
+    // Simple, Clean XOR Encryption (Effective but not "messy")
+    let result = [];
     for (let i = 0; i < source.length; i++) {
-        let charCode = source.charCodeAt(i);
-        let keyChar = keyBytes[i % keyBytes.length];
-        // XOR Operation
-        let encrypted = charCode ^ keyChar;
-        // Additional shift based on key len to scramble further
-        encrypted = (encrypted + keyBytes.length) % 256;
-        encryptedBytes.push(encrypted);
+        result.push(source.charCodeAt(i) ^ password.charCodeAt(i % password.length));
     }
 
-    // 3. Format as Lua Table
-    const luaTable = "{" + encryptedBytes.join(",") + "}";
+    // Convert to hex string (Cleanest look)
+    const hex = result.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // 4. Generate the Loader Payload
-    // This Lua code runs on the client. It takes the password input,
-    // recreates the decryption key, decrypts the bytes, and runs loadstring.
+    // Generate the Clean Loader Payload
     const finalLua = `--[[
-    Protected by UnknownScripts 🛡️
-    Auth Required.
+    🔒 Protected Script
+    Hosted on: UnknownScripts
 ]]
 
-return function(pass)
-    if not pass or type(pass) ~= "string" then
-        return warn("[Unknown] Password required!")
+return function(_PASS)
+    local _KEY = "${password}"
+    local _DATA = "${hex}"
+
+    if _PASS ~= _KEY then
+        return error("⛔ Access Denied: Incorrect Password")
     end
 
-    local enc = ${luaTable}
-    local function decrypt(data, key)
-        local res = {}
-        local keyLen = #key
-        local keyBytes = {string.byte(key, 1, -1)}
-        
-        for i = 1, #data do
-            local k = keyBytes[(i-1) % keyLen + 1]
-            local b = data[i]
-            -- Reverse the shift
-            b = (b - keyLen) % 256
-            -- Reverse the XOR
-            table.insert(res, string.char(bit32.bxor(b, k)))
-        end
-        return table.concat(res)
+    local _RES = ""
+    for i = 1, #_DATA, 2 do
+        local _BYTE = tonumber(string.sub(_DATA, i, i+1), 16)
+        local _K = string.byte(_KEY, (math.ceil(i/2)-1) % #_KEY + 1)
+        _RES = _RES .. string.char(bit32.bxor(_BYTE, _K))
     end
 
-    -- Attempt Decrypt
-    local success, result = pcall(function()
-        return decrypt(enc, pass)
-    end)
-
-    if not success then return warn("[Unknown] Decryption Error") end
-
-    -- Verify (Simple check if it looks like Lua)
-    -- If password is wrong, 'result' will be garbage and loadstring will fail usually
-    
-    local func, err = loadstring(result)
-    if not func then
-        warn("[Unknown] Invalid Password (Or compilation failed)")
-        return
-    end
-
-    func() -- Run the script
+    loadstring(_RES)()
 end`;
 
     document.getElementById('finalOutput').value = finalLua;
     demoPassSpan.textContent = password;
     outputArea.style.display = 'block';
+
+    // Update instructions for Self-Hosting
+    const instructionList = document.querySelector("#resultArea ol");
+    if (instructionList) {
+        instructionList.innerHTML = `
+            <li><strong>Download</strong> the .lua file below.</li>
+            <li><strong>Upload</strong> it to your GitHub repository (e.g., in a 'scripts' folder).</li>
+            <li>Your link will be: <code>https://noahisgood8676.github.io/unknown-site/scripts/YOUR_FILENAME.lua</code></li>
+        `;
+    }
 
     // Scroll to result
     outputArea.scrollIntoView({ behavior: 'smooth' });
