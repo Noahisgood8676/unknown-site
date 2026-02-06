@@ -3,13 +3,30 @@
  * Client-side encryption for Lua scripts
  */
 
-// Auth Check
-if (localStorage.getItem('unknownscripts_auth') !== 'true') {
-    window.location.href = 'index.html';
+const CONFIG = {
+    accessCode: "unknown2011scripts",
+    storageKey: "unknownscripts_auth"
+};
+
+// Auth Check - Only redirect if we are on the dashboard and NOT logged in
+if (window.location.pathname.includes('dashboard.html')) {
+    if (localStorage.getItem(CONFIG.storageKey) !== 'true') {
+        window.location.href = 'index.html';
+    }
+}
+
+function login() {
+    const password = prompt("🔐 Enter Access Code:");
+    if (password === CONFIG.accessCode) {
+        localStorage.setItem(CONFIG.storageKey, 'true');
+        window.location.href = 'dashboard.html';
+    } else if (password !== null) {
+        alert("❌ Invalid Access Code");
+    }
 }
 
 function logout() {
-    localStorage.removeItem('unknownscripts_auth');
+    localStorage.removeItem(CONFIG.storageKey);
     window.location.href = 'index.html';
 }
 
