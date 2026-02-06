@@ -88,8 +88,10 @@ function switchView(viewId) {
 }
 
 // ============================================
-// Script Protection - WORKING Base64 for Roblox
+// Script Protection - Simple Byte Encoding
 // ============================================
+let lastProtectedScript = null; // Store for loader builder
+
 function obfuscateScript() {
     const input = document.getElementById('scriptInput').value.trim();
 
@@ -98,71 +100,26 @@ function obfuscateScript() {
         return;
     }
 
-    // Encode to Base64 (works with UTF-8)
-    const encoded = btoa(unescape(encodeURIComponent(input)));
+    // Convert to byte array
+    const bytes = [];
+    for (let i = 0; i < input.length; i++) {
+        bytes.push(input.charCodeAt(i));
+    }
 
-    // Generate WORKING Lua code with real Base64 decoder
+    // Generate Lua code with simple byte decoding
     const protectedCode = `-- Protected by UnknownScripts
 -- github.com/Noahisgood8676/unknown-site
 
-local b64 = [[${encoded}]]
-
--- Base64 Decode Function
-local function b64decode(data)
-    local chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
-    local result = ''
-    local padding = 0
-    
-    data = data:gsub('[^'..chars..']', '')
-    
-    for i = 1, #data, 4 do
-        local a, b, c, d = data:byte(i, i + 3)
-        
-        local function charIndex(char)
-            if not char then return 0 end
-            local idx = chars:find(string.char(char), 1, true)
-            return idx and (idx - 1) or 0
-        end
-        
-        local n = charIndex(a) * 262144 + charIndex(b) * 4096 + charIndex(c) * 64 + charIndex(d)
-        
-        result = result .. string.char(
-            math.floor(n / 65536) % 256,
-            math.floor(n / 256) % 256,
-            n % 256
-        )
-    end
-    
-    -- Remove padding
-    if data:sub(-2) == '==' then
-        result = result:sub(1, -3)
-    elseif data:sub(-1) == '=' then
-        result = result:sub(1, -2)
-    end
-    
-    return result
+local bytes = {${bytes.join(',')}}
+local script = ''
+for i = 1, #bytes do
+    script = script .. string.char(bytes[i])
 end
+loadstring(script)()`;
 
--- Decode and execute
-local decoded = b64decode(b64)
-
-if not decoded or decoded == '' then
-    warn('[UnknownScripts] Failed to decode script!')
-    return
-end
-
-local fn, compileErr = loadstring(decoded)
-
-if not fn then
-    warn('[UnknownScripts] Compile error: ' .. tostring(compileErr))
-    return
-end
-
-local success, runErr = pcall(fn)
-
-if not success then
-    warn('[UnknownScripts] Runtime error: ' .. tostring(runErr))
-end`;
+    // Store for loader builder
+    lastProtectedScript = protectedCode;
+    sessionStorage.setItem('lastProtectedScript', protectedCode);
 
     document.getElementById('scriptOutput').value = protectedCode;
     document.getElementById('outputArea').style.display = 'block';
@@ -482,7 +439,6 @@ function generateLoaderScript() {
 
     const loaderCode = `--[[
     UnknownScripts Loader v1.0
-    Personal Script Protection System
     Generated: ${new Date().toISOString()}
     
     Usage:
@@ -492,7 +448,6 @@ function generateLoaderScript() {
 
 local UnknownScripts = {}
 
--- Configuration
 local CONFIG = {
     validKeys = {
 ${keysLuaArray}
@@ -501,68 +456,41 @@ ${keysLuaArray}
     keyCheckEnabled = ${keyCheckEnabled}
 }
 
--- Base64 Decode Function
-local function b64decode(data)
-    local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r, f = '', (b:find(x) - 1)
-        for i = 6, 1, -1 do 
-            r = r .. (f % 2^i - f % 2^(i-1) > 0 and '1' or '0') 
-        end
-        return r
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-        if (#x ~= 8) then return '' end
-        local c = 0
-        for i = 1, 8 do 
-            c = c + (x:sub(i, i) == '1' and 2^(8-i) or 0) 
-        end
-        return string.char(c)
-    end))
-end
-
--- Internal Functions
 local function isValidKey(key)
-    if not CONFIG.keyCheckEnabled then
-        return true
-    end
-    for _, validKey in ipairs(CONFIG.validKeys) do
-        if validKey == key then
-            return true
-        end
+    if not CONFIG.keyCheckEnabled then return true end
+    for _, k in ipairs(CONFIG.validKeys) do
+        if k == key then return true end
     end
     return false
 end
 
--- Public API
 function UnknownScripts.execute(options)
     options = options or {}
     local key = options.key or ""
     
-    -- Validate key
     if not isValidKey(key) then
-        warn("[UnknownScripts] ❌ Invalid or expired key!")
+        warn("[UnknownScripts] Invalid key!")
         return false
     end
     
-    -- Fetch the protected script
-    local success, scriptCode = pcall(function()
+    local ok, code = pcall(function()
         return game:HttpGet(CONFIG.scriptUrl)
     end)
     
-    if not success or not scriptCode then
-        warn("[UnknownScripts] ❌ Failed to load script!")
+    if not ok or not code then
+        warn("[UnknownScripts] Failed to fetch script!")
         return false
     end
     
-    -- Execute the script
-    local execSuccess, execErr = pcall(function()
-        loadstring(scriptCode)()
-    end)
+    local fn, err = loadstring(code)
+    if not fn then
+        warn("[UnknownScripts] Compile error: " .. tostring(err))
+        return false
+    end
     
-    if not execSuccess then
-        warn("[UnknownScripts] ❌ Execution error: " .. tostring(execErr))
+    local success, runErr = pcall(fn)
+    if not success then
+        warn("[UnknownScripts] Runtime error: " .. tostring(runErr))
         return false
     end
     
@@ -571,10 +499,6 @@ end
 
 function UnknownScripts.checkKey(key)
     return isValidKey(key)
-end
-
-function UnknownScripts.getVersion()
-    return "1.0.0"
 end
 
 return UnknownScripts`;
