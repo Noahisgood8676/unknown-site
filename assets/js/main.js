@@ -470,7 +470,7 @@ local CONFIG = {
     validKeys = {
 ${keysLuaArray}
     },
-    scriptUrl = "${scriptUrl}",
+    scriptUrl = [[${scriptUrl}]],
     keyCheckEnabled = ${keyCheckEnabled}
 }
 
