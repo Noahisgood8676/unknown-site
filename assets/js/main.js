@@ -105,36 +105,63 @@ function obfuscateScript() {
     const protectedCode = `-- Protected by UnknownScripts
 -- github.com/Noahisgood8676/unknown-site
 
-local b64 = "${encoded}"
+local b64 = [[${encoded}]]
 
--- Base64 Decode Function (Works in Roblox)
-local function decode(data)
-    local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r, f = '', (b:find(x) - 1)
-        for i = 6, 1, -1 do 
-            r = r .. (f % 2^i - f % 2^(i-1) > 0 and '1' or '0') 
+-- Base64 Decode Function
+local function b64decode(data)
+    local chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+    local result = ''
+    local padding = 0
+    
+    data = data:gsub('[^'..chars..']', '')
+    
+    for i = 1, #data, 4 do
+        local a, b, c, d = data:byte(i, i + 3)
+        
+        local function charIndex(char)
+            if not char then return 0 end
+            local idx = chars:find(string.char(char), 1, true)
+            return idx and (idx - 1) or 0
         end
-        return r
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-        if (#x ~= 8) then return '' end
-        local c = 0
-        for i = 1, 8 do 
-            c = c + (x:sub(i, i) == '1' and 2^(8-i) or 0) 
-        end
-        return string.char(c)
-    end))
+        
+        local n = charIndex(a) * 262144 + charIndex(b) * 4096 + charIndex(c) * 64 + charIndex(d)
+        
+        result = result .. string.char(
+            math.floor(n / 65536) % 256,
+            math.floor(n / 256) % 256,
+            n % 256
+        )
+    end
+    
+    -- Remove padding
+    if data:sub(-2) == '==' then
+        result = result:sub(1, -3)
+    elseif data:sub(-1) == '=' then
+        result = result:sub(1, -2)
+    end
+    
+    return result
 end
 
--- Execute protected script
-local success, err = pcall(function()
-    loadstring(decode(b64))()
-end)
+-- Decode and execute
+local decoded = b64decode(b64)
+
+if not decoded or decoded == '' then
+    warn('[UnknownScripts] Failed to decode script!')
+    return
+end
+
+local fn, compileErr = loadstring(decoded)
+
+if not fn then
+    warn('[UnknownScripts] Compile error: ' .. tostring(compileErr))
+    return
+end
+
+local success, runErr = pcall(fn)
 
 if not success then
-    warn("[UnknownScripts] Execution error: " .. tostring(err))
+    warn('[UnknownScripts] Runtime error: ' .. tostring(runErr))
 end`;
 
     document.getElementById('scriptOutput').value = protectedCode;
