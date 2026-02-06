@@ -438,7 +438,7 @@ function generateLoaderScript() {
         : '        -- No keys added';
 
     const loaderCode = `--[[
-    UnknownScripts Loader v1.0
+    UnknownScripts Loader v1.1 (Debug Mode)
     Generated: ${new Date().toISOString()}
     
     Usage:
@@ -456,6 +456,10 @@ ${keysLuaArray}
     keyCheckEnabled = ${keyCheckEnabled}
 }
 
+local function debugLog(msg)
+    print("[UnknownScripts DEBUG]: " .. tostring(msg))
+end
+
 local function isValidKey(key)
     if not CONFIG.keyCheckEnabled then return true end
     for _, k in ipairs(CONFIG.validKeys) do
@@ -465,34 +469,51 @@ local function isValidKey(key)
 end
 
 function UnknownScripts.execute(options)
+    debugLog("Execute called...")
+    
     options = options or {}
     local key = options.key or ""
     
+    debugLog("Checking key...")
     if not isValidKey(key) then
         warn("[UnknownScripts] Invalid key!")
         return false
     end
+    debugLog("Key valid!")
+    
+    debugLog("Fetching protected script...")
+    -- Add cache buster
+    local finalUrl = CONFIG.scriptUrl .. "?t=" .. tostring(os.time())
     
     local ok, code = pcall(function()
-        return game:HttpGet(CONFIG.scriptUrl)
+        return game:HttpGet(finalUrl)
     end)
     
     if not ok or not code then
-        warn("[UnknownScripts] Failed to fetch script!")
+        warn("[UnknownScripts] Failed to fetch script! " .. tostring(code))
         return false
     end
+    debugLog("Script fetched! Length: " .. #code)
     
+    if #code < 10 then 
+        warn("[UnknownScripts] Script seems too short/empty") 
+    end
+
+    debugLog("Compiling protected script...")
     local fn, err = loadstring(code)
     if not fn then
         warn("[UnknownScripts] Compile error: " .. tostring(err))
         return false
     end
+    debugLog("Compilation successful!")
     
+    debugLog("Running protected script...")
     local success, runErr = pcall(fn)
     if not success then
         warn("[UnknownScripts] Runtime error: " .. tostring(runErr))
         return false
     end
+    debugLog("Execution complete!")
     
     return true
 end
