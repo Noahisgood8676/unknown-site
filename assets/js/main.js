@@ -138,3 +138,105 @@ function downloadScript() {
     a.download = "locked_script.lua";
     a.click();
 }
+
+// ==========================================
+// Saved Scripts Library
+// ==========================================
+function getLibrary() {
+    const data = localStorage.getItem('unknownscripts_library');
+    try {
+        return data ? JSON.parse(data) : [];
+    } catch { return []; }
+}
+
+function saveToLibrary() {
+    const output = document.getElementById('finalOutput').value;
+    const pass = document.getElementById('scriptPassword').value;
+    // Extract first line or use generic name
+    const source = document.getElementById('sourceScript').value;
+    let name = source.split('\n')[0].substring(0, 30);
+
+    if (name.startsWith('--')) name = name.substring(2).trim();
+    if (!name || name.length < 2) name = "Untitled Script " + new Date().toLocaleTimeString();
+
+    if (!output) return alert("⚠️ Encrypt a script first!");
+
+    const lib = getLibrary();
+    lib.unshift({
+        id: Date.now().toString(),
+        name: name,
+        password: pass,
+        code: output,
+        date: new Date().toLocaleDateString()
+    });
+
+    localStorage.setItem('unknownscripts_library', JSON.stringify(lib));
+    renderLibrary();
+    alert("✅ Saved to Library!");
+}
+
+function deleteScript(id) {
+    if (!confirm("Are you sure?")) return;
+    const lib = getLibrary().filter(s => s.id !== id);
+    localStorage.setItem('unknownscripts_library', JSON.stringify(lib));
+    renderLibrary();
+}
+
+function copySavedScript(id) {
+    const lib = getLibrary();
+    const script = lib.find(s => s.id === id);
+    if (script) {
+        navigator.clipboard.writeText(script.code);
+        alert("✅ Encrypted code copied!");
+    }
+}
+
+function renderLibrary() {
+    const list = document.getElementById('savedScriptsList');
+    if (!list) return; // Not on dashboard?
+
+    const lib = getLibrary();
+
+    if (lib.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                No saved scripts yet. Encrypt one and click "Save to Library".
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = lib.map(s => `
+        <div style="background: var(--bg-primary); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${escapeHtml(s.name)}</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    <i class="fas fa-key"></i> Pass: <span style="font-family: monospace; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">${escapeHtml(s.password)}</span>
+                    <span style="margin: 0 8px;">•</span>
+                    ${s.date}
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="copySavedScript('${s.id}')" class="btn btn-outline btn-sm" title="Copy Code">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <button onclick="deleteScript('${s.id}')" class="btn btn-outline btn-sm" style="border-color: #ef4444; color: #ef4444;" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function escapeHtml(text) {
+    if (!text) return text;
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Initial Render
+document.addEventListener('DOMContentLoaded', renderLibrary);
