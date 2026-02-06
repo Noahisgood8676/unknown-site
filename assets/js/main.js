@@ -430,6 +430,155 @@ function updateStats() {
 }
 
 // ============================================
+// Loader Builder
+// ============================================
+function generateLoaderScript() {
+    const scriptUrl = document.getElementById('loaderScriptUrl').value.trim();
+    const keysText = document.getElementById('loaderKeys').value.trim();
+    const keyCheckEnabled = document.getElementById('loaderKeyCheck').checked;
+
+    if (!scriptUrl) {
+        alert("⚠️ Please enter your protected script's Raw URL!");
+        return;
+    }
+
+    // Parse keys
+    const keys = keysText
+        .split('\n')
+        .map(k => k.trim())
+        .filter(k => k.length > 0);
+
+    // Generate the keys array string for Lua
+    const keysLuaArray = keys.length > 0
+        ? keys.map(k => `        "${k}"`).join(',\n')
+        : '        -- No keys added';
+
+    const loaderCode = `--[[
+    UnknownScripts Loader v1.0
+    Personal Script Protection System
+    Generated: ${new Date().toISOString()}
+    
+    Usage:
+    local Loader = loadstring(game:HttpGet("YOUR_LOADER_URL"))()
+    Loader.execute({ key = "YOUR_KEY_HERE" })
+]]
+
+local UnknownScripts = {}
+
+-- Configuration
+local CONFIG = {
+    validKeys = {
+${keysLuaArray}
+    },
+    scriptUrl = "${scriptUrl}",
+    keyCheckEnabled = ${keyCheckEnabled}
+}
+
+-- Base64 Decode Function
+local function b64decode(data)
+    local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    data = string.gsub(data, '[^'..b..'=]', '')
+    return (data:gsub('.', function(x)
+        if (x == '=') then return '' end
+        local r, f = '', (b:find(x) - 1)
+        for i = 6, 1, -1 do 
+            r = r .. (f % 2^i - f % 2^(i-1) > 0 and '1' or '0') 
+        end
+        return r
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+        if (#x ~= 8) then return '' end
+        local c = 0
+        for i = 1, 8 do 
+            c = c + (x:sub(i, i) == '1' and 2^(8-i) or 0) 
+        end
+        return string.char(c)
+    end))
+end
+
+-- Internal Functions
+local function isValidKey(key)
+    if not CONFIG.keyCheckEnabled then
+        return true
+    end
+    for _, validKey in ipairs(CONFIG.validKeys) do
+        if validKey == key then
+            return true
+        end
+    end
+    return false
+end
+
+-- Public API
+function UnknownScripts.execute(options)
+    options = options or {}
+    local key = options.key or ""
+    
+    -- Validate key
+    if not isValidKey(key) then
+        warn("[UnknownScripts] ❌ Invalid or expired key!")
+        return false
+    end
+    
+    -- Fetch the protected script
+    local success, scriptCode = pcall(function()
+        return game:HttpGet(CONFIG.scriptUrl)
+    end)
+    
+    if not success or not scriptCode then
+        warn("[UnknownScripts] ❌ Failed to load script!")
+        return false
+    end
+    
+    -- Execute the script
+    local execSuccess, execErr = pcall(function()
+        loadstring(scriptCode)()
+    end)
+    
+    if not execSuccess then
+        warn("[UnknownScripts] ❌ Execution error: " .. tostring(execErr))
+        return false
+    end
+    
+    return true
+end
+
+function UnknownScripts.checkKey(key)
+    return isValidKey(key)
+end
+
+function UnknownScripts.getVersion()
+    return "1.0.0"
+end
+
+return UnknownScripts`;
+
+    document.getElementById('loaderOutput').value = loaderCode;
+    document.getElementById('loaderOutputArea').style.display = 'block';
+}
+
+function copyLoaderOutput() {
+    const output = document.getElementById('loaderOutput');
+    output.select();
+    navigator.clipboard.writeText(output.value).then(() => {
+        alert('✅ Loader copied to clipboard!');
+    });
+}
+
+function downloadLoaderOutput() {
+    const output = document.getElementById('loaderOutput').value;
+    const blob = new Blob([output], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "loader.lua";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ============================================
 // Initialization
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -446,6 +595,13 @@ document.addEventListener('DOMContentLoaded', () => {
     renderScripts();
     renderKeys();
     updateStats();
+
+    // Pre-fill loader keys from saved keys
+    const keys = getKeys();
+    const loaderKeysEl = document.getElementById('loaderKeys');
+    if (loaderKeysEl && keys.length > 0) {
+        loaderKeysEl.value = keys.map(k => k.key).join('\n');
+    }
 
     // Close modal on outside click
     const modal = document.getElementById('editScriptModal');

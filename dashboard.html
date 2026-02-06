@@ -129,6 +129,10 @@
                     <i class="fas fa-code"></i>
                     My Scripts
                 </a>
+                <a href="#" class="sidebar-link" data-view="loader">
+                    <i class="fas fa-rocket"></i>
+                    Loader Builder
+                </a>
             </div>
 
             <div class="sidebar-section">
@@ -265,6 +269,94 @@
                                 <!-- Scripts rendered by JS -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loader Builder View -->
+            <div id="view-loader" class="view">
+                <h2 style="margin-bottom: 24px; font-size: 1.5rem;">
+                    <i class="fas fa-rocket" style="margin-right: 8px; color: var(--accent-secondary);"></i>
+                    Loader Builder
+                </h2>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Create Your Personal Loader</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                            Generate a loader script that works like Luarmor. Users load your loader, then call
+                            <code>Loader.execute({ key = "..." })</code> to run your protected script.
+                        </p>
+
+                        <div class="form-group">
+                            <label>Protected Script Raw URL</label>
+                            <input type="text" id="loaderScriptUrl"
+                                placeholder="https://gist.githubusercontent.com/... (your protected script)">
+                            <small style="color: var(--text-muted); display: block; margin-top: 8px;">
+                                This is the Raw URL of your protected script (the one you obfuscated).
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Valid Keys (one per line)</label>
+                            <textarea id="loaderKeys" placeholder="KEY-ABCD-1234-WXYZ&#10;KEY-DEMO-5678-TEST"
+                                style="min-height: 120px; font-family: var(--font-mono);"></textarea>
+                            <small style="color: var(--text-muted); display: block; margin-top: 8px;">
+                                Only these keys will be able to run your script. Use the Keys page to generate them.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="loaderKeyCheck" checked style="width: auto;">
+                                Enable Key Checking
+                            </label>
+                        </div>
+
+                        <button onclick="generateLoaderScript()" class="btn btn-primary">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            Generate Loader
+                        </button>
+
+                        <div id="loaderOutputArea" style="display: none; margin-top: 24px;">
+                            <h4 style="margin-bottom: 12px;"><i class="fas fa-file-code" style="margin-right: 8px;"></i>
+                                Your Loader Script</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 12px;">
+                                1. Create a new <strong>Secret Gist</strong> with this code<br>
+                                2. Get the Raw URL<br>
+                                3. Share the usage example below with users
+                            </p>
+                            <textarea id="loaderOutput" class="output-textarea" readonly
+                                style="min-height: 300px;"></textarea>
+
+                            <div style="display: flex; gap: 12px; margin-top: 12px;">
+                                <button onclick="copyLoaderOutput()" class="btn btn-outline">
+                                    <i class="fas fa-copy"></i> Copy Loader
+                                </button>
+                                <button onclick="downloadLoaderOutput()" class="btn btn-outline">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+
+                            <div
+                                style="margin-top: 24px; padding: 20px; background: var(--bg-primary); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                <h4 style="margin-bottom: 12px; color: #22c55e;">
+                                    <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                                    Usage Example
+                                </h4>
+                                <pre
+                                    style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; margin: 0;"><code id="loaderUsageCode">-- Protected by UnknownScripts
+local Loader = loadstring(game:HttpGet(
+    "YOUR_LOADER_RAW_URL_HERE"
+))()
+
+Loader.execute({
+    key = "USER_KEY_HERE"
+})</code></pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
